@@ -1,4 +1,4 @@
-package linkedlist
+package linked_list
 
 /*
    @Time: 2023/10/14 18:23

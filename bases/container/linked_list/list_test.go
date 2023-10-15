@@ -1,4 +1,4 @@
-package linkedlist
+package linked_list
 
 import (
 	"strconv"
@@ -11,7 +11,7 @@ import (
    @File: list_test
 */
 
-func TestPopAndPush(t *testing.T) {
+func TestPush(t *testing.T) {
 	list := New[string, int8]()
 	id := 1679600
 	for i := 0; i < 10000; i++ {
