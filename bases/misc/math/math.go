@@ -1,6 +1,6 @@
 package math
 
-import "golib/bases/misc/common"
+import "github.com/orbit-w/golib/v1/bases/misc/common"
 
 //PowerOf2 向上取最小的2的平方
 //[1, 1<<32]
