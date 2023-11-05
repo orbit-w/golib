@@ -29,6 +29,11 @@ func (p *Packet) WriteBytes(v []byte) {
 	p.buf = append(p.buf, v...)
 }
 
+func (p *Packet) WriteBytes32(v []byte) {
+	p.WriteUint32(uint32(len(v)))
+	p.buf = append(p.buf, v...)
+}
+
 func (p *Packet) WriteString(v string) {
 	bytes := []byte(v)
 	p.WriteUint16(uint16(len(bytes)))

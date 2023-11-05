@@ -19,6 +19,7 @@ type IPacket interface {
 	Write(v []byte)
 	WriteBool(v bool)
 	WriteBytes(v []byte)
+	WriteBytes32(v []byte)
 	WriteString(v string)
 	WriteUint8(v uint8)
 	WriteUint16(v uint16)
@@ -45,13 +46,13 @@ type Packet struct {
 	buf []byte
 }
 
-func New() *Packet {
+func New() IPacket {
 	return &Packet{
 		buf: make([]byte, 0),
 	}
 }
 
-func NewWithInitialSize(initSize int) *Packet {
+func NewWithInitialSize(initSize int) IPacket {
 	return &Packet{
 		buf: make([]byte, initSize),
 	}
