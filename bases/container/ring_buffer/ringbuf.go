@@ -82,13 +82,26 @@ func (ins *RingBuffer[V]) IsEmpty() bool {
 	return ins.front == ins.rear
 }
 
+func (ins *RingBuffer[V]) Contract() bool {
+	if ins.IsEmpty() && ins.size > ins.initSize {
+		ins.Reset()
+		return true
+	}
+	return false
+}
+
 func (ins *RingBuffer[V]) Reset() {
 	ins.front = 0
 	ins.rear = 0
-	if ins.size > ins.initSize {
-		ins.buf = make([]V, ins.initSize)
-		ins.size = ins.initSize
-	}
+	ins.size = ins.initSize
+	ins.buf = make([]V, ins.initSize)
+}
+
+func (ins *RingBuffer[V]) Discard() {
+	ins.front = 0
+	ins.rear = 0
+	ins.size = 0
+	ins.buf = nil
 }
 
 func (ins *RingBuffer[V]) grow() {
