@@ -14,3 +14,11 @@ func Min[T common.Integer](a, b T) T {
 	}
 	return b
 }
+
+func ABS[T common.Integer](v T) T {
+	if v < 0 {
+		return -v
+	} else {
+		return v
+	}
+}
