@@ -1,6 +1,6 @@
 package number_utils
 
-import "github.com/orbit-w/golib/v1/bases/misc/common"
+import "github.com/orbit-w/golib/bases/misc/common"
 
 /*
    @Time: 2023/8/22 00:17

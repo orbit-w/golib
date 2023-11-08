@@ -1,8 +1,8 @@
 package heap_list
 
 import (
-	"github.com/orbit-w/golib/v1/bases/container/heap"
-	"github.com/orbit-w/golib/v1/bases/misc/common"
+	"github.com/orbit-w/golib/bases/container/heap"
+	"github.com/orbit-w/golib/bases/misc/common"
 )
 
 /*

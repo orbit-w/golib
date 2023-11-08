@@ -1,7 +1,7 @@
 package heap
 
 import (
-	"github.com/orbit-w/golib/v1/bases/misc/common"
+	"github.com/orbit-w/golib/bases/misc/common"
 )
 
 /*

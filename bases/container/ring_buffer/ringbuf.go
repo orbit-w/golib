@@ -2,7 +2,7 @@ package ring_buffer
 
 import (
 	"errors"
-	"github.com/orbit-w/golib/v1/bases/misc/math"
+	"github.com/orbit-w/golib/bases/misc/math"
 )
 
 // ErrIsEmpty 缓冲区为空

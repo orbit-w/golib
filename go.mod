@@ -1,4 +1,4 @@
-module github.com/orbit-w/golib/v1
+module github.com/orbit-w/golib
 
 go 1.18
 

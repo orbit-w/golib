@@ -3,7 +3,7 @@ package ring_buffer
 import (
 	"errors"
 	"fmt"
-	math2 "github.com/orbit-w/golib/v1/bases/misc/math"
+	math2 "github.com/orbit-w/golib/bases/misc/math"
 	"math"
 	"testing"
 
