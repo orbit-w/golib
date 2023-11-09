@@ -25,6 +25,13 @@ type HeapList[K comparable, V any, S common.Integer] struct {
 	items map[K]*heap.Item[Entry[K, V], S]
 }
 
+func New[K comparable, V any, S common.Integer]() *HeapList[K, V, S] {
+	return &HeapList[K, V, S]{
+		h:     &heap.Heap[Entry[K, V], S]{},
+		items: make(map[K]*heap.Item[Entry[K, V], S], 1<<3),
+	}
+}
+
 func (h *HeapList[K, V, S]) Exist(key K) bool {
 	_, exist := h.items[key]
 	return exist
