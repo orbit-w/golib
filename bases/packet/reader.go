@@ -42,6 +42,30 @@ func (p *Packet) ReadInt8() (ret int8, err error) {
 	return
 }
 
+func (p *Packet) ReadInt16() (int16, error) {
+	ret, err := p.ReadUint16()
+	if err != nil {
+		return 0, err
+	}
+	return int16(ret), err
+}
+
+func (p *Packet) ReadInt32() (int32, error) {
+	ret, err := p.ReadUint32()
+	if err != nil {
+		return 0, err
+	}
+	return int32(ret), err
+}
+
+func (p *Packet) ReadInt64() (int64, error) {
+	ret, err := p.ReadUint64()
+	if err != nil {
+		return 0, err
+	}
+	return int64(ret), err
+}
+
 func (p *Packet) ReadUint16() (ret uint16, err error) {
 	var shift uint = 2
 	if p.OutOfRange(shift) {

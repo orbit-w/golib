@@ -40,6 +40,22 @@ func (p *Packet) WriteString(v string) {
 	p.buf = append(p.buf, bytes...)
 }
 
+func (p *Packet) WriteInt8(v int8) {
+	p.buf = append(p.buf, byte(v))
+}
+
+func (p *Packet) WriteInt16(v int16) {
+	p.WriteUint16(uint16(v))
+}
+
+func (p *Packet) WriteInt32(v int32) {
+	p.WriteUint32(uint32(v))
+}
+
+func (p *Packet) WriteInt64(v int64) {
+	p.WriteUint64(uint64(v))
+}
+
 func (p *Packet) WriteUint8(v uint8) {
 	p.buf = append(p.buf, v)
 }
