@@ -13,6 +13,7 @@ type IPacket interface {
 	Cap() int
 	Off() uint
 	Remain() []byte
+
 	Data() []byte
 
 	//writer
@@ -72,6 +73,10 @@ func getPacket() *Packet {
 
 func (p *Packet) Remain() []byte {
 	return p.buf[p.off:]
+}
+
+func (p *Packet) Empty() bool {
+	return int(p.off) == len(p.buf)
 }
 
 func (p *Packet) Reset() {
