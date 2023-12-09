@@ -72,6 +72,13 @@ func (h *HeapList[K, V, S]) Pop() (k K, v V, exist bool) {
 	return
 }
 
+func (h *HeapList[K, V, S]) Delete(k K) {
+	if item, exist := h.items[k]; exist {
+		delete(h.items, k)
+		h.h.Delete(item.Index)
+	}
+}
+
 func (h *HeapList[K, V, S]) Update(k K, v V, score S) {
 	if item, exist := h.items[k]; exist {
 		item.Priority = score
