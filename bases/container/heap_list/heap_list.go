@@ -72,6 +72,17 @@ func (h *HeapList[K, V, S]) Pop() (k K, v V, exist bool) {
 	return
 }
 
+func (h *HeapList[K, V, S]) PopK(k K) (V, bool) {
+	item, exist := h.items[k]
+	var v V
+	if exist {
+		v = item.Value.Value
+		delete(h.items, k)
+		h.h.Delete(item.Index)
+	}
+	return v, exist
+}
+
 func (h *HeapList[K, V, S]) Delete(k K) {
 	if item, exist := h.items[k]; exist {
 		delete(h.items, k)
