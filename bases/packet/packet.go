@@ -62,7 +62,7 @@ func New() IPacket {
 
 func NewWithInitialSize(initSize int) IPacket {
 	return &Packet{
-		buf: make([]byte, initSize),
+		buf: make([]byte, 0, initSize),
 	}
 }
 
