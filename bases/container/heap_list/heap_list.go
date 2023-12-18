@@ -118,7 +118,7 @@ func (h *HeapList[K, V, S]) PopByScore(max S, iter func(k K, v V) bool) {
 
 	for {
 		head := h.h.Peek()
-		if head != nil || head.Priority > max {
+		if head == nil || head.Priority > max {
 			break
 		}
 
