@@ -1,4 +1,4 @@
-package sender
+package sender_wrapper
 
 import (
 	"github.com/orbit-w/golib/bases/packet"
@@ -8,7 +8,7 @@ import (
 
 /*
    @Author: orbit-w
-   @File: sender
+   @File: sender_wrapper
    @2023 11月 周日 19:52
 */
 
