@@ -14,7 +14,7 @@ import (
 
 type SenderWrapper struct {
 	sender func(body packet.IPacket) error
-	ch     unbounded.IUnbounded[sendParams]
+	ch     *unbounded.Unbounded[sendParams]
 }
 
 type sendParams struct {
@@ -24,7 +24,7 @@ type sendParams struct {
 func NewSender(sender func(body packet.IPacket) error) *SenderWrapper {
 	ins := &SenderWrapper{
 		sender: sender,
-		ch:     unbounded.New[sendParams](2048),
+		ch:     unbounded.NewUnbounded[sendParams](2048),
 	}
 
 	go func() {
