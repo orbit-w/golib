@@ -68,6 +68,15 @@ func (rb *RingBuffer[V]) Pop() (V, bool) {
 	return res, true
 }
 
+func (rb *RingBuffer[V]) Peek() (item V) {
+	if rb.IsEmpty() {
+		return
+	}
+	head := (rb.head + 1) % rb.mod
+	item = rb.buffer[head]
+	return item
+}
+
 func (rb *RingBuffer[V]) Reset() {
 	rb.head = 0
 	rb.tail = 0
