@@ -2,7 +2,7 @@ package mailbox
 
 import (
 	ringbuffer "github.com/Workiva/go-datastructures/queue"
-	"github.com/orbit-w/golib/bases/misc/math"
+	"github.com/orbit-w/golib/bases/math"
 )
 
 type BoundedQueue struct {

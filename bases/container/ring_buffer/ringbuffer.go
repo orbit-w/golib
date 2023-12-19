@@ -1,6 +1,8 @@
 package ring_buffer
 
-import "github.com/orbit-w/golib/bases/misc/math"
+import (
+	"github.com/orbit-w/golib/bases/math"
+)
 
 type RingBuffer[V any] struct {
 	len     int
