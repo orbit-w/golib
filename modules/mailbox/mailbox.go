@@ -13,6 +13,7 @@ type IQueue interface {
 	Pop() any
 }
 
+// Invoker Invocation provides abilities to invoke system messages, invoke user messages, and escalate failures
 type Invoker interface {
 	InvokeMsg(any)
 	InvokeSysMsg(any)
