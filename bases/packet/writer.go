@@ -16,6 +16,11 @@ func (p *Packet) Write(v []byte) {
 	p.buf = append(p.buf, v...)
 }
 
+func (p *Packet) WriteRowBytesStr(str string) {
+	v := []byte(str)
+	p.buf = append(p.buf, v...)
+}
+
 func (p *Packet) WriteBool(v bool) {
 	if v {
 		p.buf = append(p.buf, byte(1))
