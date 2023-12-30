@@ -16,8 +16,8 @@ type IPacket interface {
 
 	Data() []byte
 
-	//writer
 	Write(v []byte)
+	WriteRowBytesStr(str string) //
 	WriteBool(v bool)
 	WriteBytes(v []byte)
 	WriteBytes32(v []byte)
@@ -32,6 +32,7 @@ type IPacket interface {
 	WriteUint64(v uint64)
 
 	//reader
+	Read(buf []byte) (n int, err error)
 	ReadBool() (ret bool, err error)
 	ReadBytes() (ret []byte, err error)
 	ReadBytes32() (ret []byte, err error)
@@ -76,7 +77,7 @@ func (p *Packet) Remain() []byte {
 }
 
 func (p *Packet) Empty() bool {
-	return int(p.off) == len(p.buf)
+	return len(p.buf) <= int(p.off)
 }
 
 func (p *Packet) Reset() {

@@ -2,6 +2,7 @@ package packet
 
 import (
 	"encoding/binary"
+	"io"
 )
 
 /*
@@ -14,6 +15,23 @@ func Reader(data []byte) IPacket {
 	packet := getPacket()
 	packet.buf = append(packet.buf, data...)
 	return packet
+}
+
+// Read reads the next len(p) bytes from the buffer or until the buffer
+// is drained. The return value n is the number of bytes read. If the
+// buffer has no data to return, err is io.EOF (unless len(p) is zero);
+// otherwise it is nil.
+func (p *Packet) Read(buf []byte) (n int, err error) {
+	if p.Empty() {
+		p.Reset()
+		if len(buf) == 0 {
+			return 0, nil
+		}
+		return 0, io.EOF
+	}
+	n = copy(buf, p.buf[p.off:])
+	p.off += uint(n)
+	return n, nil
 }
 
 func (p *Packet) ReadBool() (ret bool, err error) {

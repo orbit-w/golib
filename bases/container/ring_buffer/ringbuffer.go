@@ -1,6 +1,8 @@
 package ring_buffer
 
-import "github.com/orbit-w/golib/bases/misc/math"
+import (
+	"github.com/orbit-w/golib/bases/math"
+)
 
 type RingBuffer[V any] struct {
 	len     int
@@ -66,6 +68,15 @@ func (rb *RingBuffer[V]) Pop() (V, bool) {
 	rb.buffer[rb.head] = v
 	rb.len -= 1
 	return res, true
+}
+
+func (rb *RingBuffer[V]) Peek() (item V) {
+	if rb.IsEmpty() {
+		return
+	}
+	head := (rb.head + 1) % rb.mod
+	item = rb.buffer[head]
+	return item
 }
 
 func (rb *RingBuffer[V]) Reset() {

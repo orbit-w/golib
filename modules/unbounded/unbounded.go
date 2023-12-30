@@ -38,6 +38,16 @@ func New[V any](size int) IUnbounded[V] {
 	}
 }
 
+func NewUnbounded[V any](size int) *Unbounded[V] {
+	return &Unbounded[V]{
+		mu:     sync.Mutex{},
+		ch:     make(chan struct{}, 1),
+		stop:   make(chan struct{}, 1),
+		buffer: ring_buffer.New[V](size),
+		out:    ring_buffer.New[V](size),
+	}
+}
+
 func (ins *Unbounded[V]) Send(msg V) error {
 	ins.mu.Lock()
 	if ins.err != nil {
