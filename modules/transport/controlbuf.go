@@ -3,7 +3,7 @@ package transport
 import (
 	"github.com/orbit-w/golib/bases/misc/number_utils"
 	"github.com/orbit-w/golib/bases/packet"
-	"github.com/orbit-w/golib/bases/wrappers/sender_wrapper"
+	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"sync"
 )
 
