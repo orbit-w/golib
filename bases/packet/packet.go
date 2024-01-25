@@ -15,6 +15,8 @@ type IPacket interface {
 	Remain() []byte
 
 	Data() []byte
+	Copy() []byte
+	CopyRemain() []byte
 
 	Write(v []byte)
 	WriteRowBytesStr(str string) //
@@ -87,6 +89,19 @@ func (p *Packet) Reset() {
 
 func (p *Packet) Data() []byte {
 	return p.buf
+}
+
+func (p *Packet) Copy() []byte {
+	dst := make([]byte, len(p.buf))
+	copy(dst, p.buf)
+	return dst
+}
+
+func (p *Packet) CopyRemain() []byte {
+	src := p.Remain()
+	dst := make([]byte, len(src))
+	copy(dst, src)
+	return dst
 }
 
 func (p *Packet) Len() int {
