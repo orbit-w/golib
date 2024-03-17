@@ -1,12 +1,14 @@
-package redisdb
+package rdb
 
 import (
+	"context"
 	"errors"
 	"github.com/redis/go-redis/v9"
 )
 
 var (
-	universalClient   redis.UniversalClient
+	universalClient redis.UniversalClient
+
 	ErrAddressInvalid = errors.New("err_redis_address_invalid")
 )
 
@@ -46,6 +48,10 @@ func NewClient(ops RedisClientOps) error {
 			MaxIdleConns:   20,
 			MaxActiveConns: 50,
 		})
+	}
+
+	if err := universalClient.Ping(context.Background()).Err(); err != nil {
+		return err
 	}
 
 	client = &Client{

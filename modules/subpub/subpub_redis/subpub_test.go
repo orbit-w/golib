@@ -1,7 +1,7 @@
 package subpub_redis
 
 import (
-	"github.com/orbit-w/golib/modules/database/redisdb"
+	"github.com/orbit-w/golib/modules/database/rdb"
 	"log"
 	"testing"
 	"time"
@@ -13,7 +13,7 @@ type Config struct {
 }
 
 func TestPubSub_Publish(t *testing.T) {
-	if err := redisdb.NewClient(redisdb.RedisClientOps{
+	if err := rdb.NewClient(rdb.RedisClientOps{
 		Username: "root",
 		Addr:     []string{"127.0.0.1:6379"},
 		Cluster:  false,
@@ -26,11 +26,11 @@ func TestPubSub_Publish(t *testing.T) {
 		count1 = 0
 	)
 
-	ps := NewPubSub(redisdb.UniversalClient(), CodecJson, "test", func(pid int32, body []byte) {
+	ps := NewPubSub(rdb.UniversalClient(), CodecJson, "test", func(pid int32, body []byte) {
 		count++
 	})
 
-	ps2 := NewPubSub(redisdb.UniversalClient(), CodecJson, "test", func(pid int32, body []byte) {
+	ps2 := NewPubSub(rdb.UniversalClient(), CodecJson, "test", func(pid int32, body []byte) {
 		count1++
 	})
 
