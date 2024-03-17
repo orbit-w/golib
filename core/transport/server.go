@@ -6,6 +6,7 @@ import (
 	"net"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -18,6 +19,7 @@ import (
 type Server struct {
 	isGzip   bool
 	ccu      int32
+	state    atomic.Uint32
 	host     string
 	listener net.Listener
 	rw       sync.RWMutex
@@ -37,6 +39,7 @@ func (ins *Server) Serve(listener net.Listener, _handle func(conn IServerConn) e
 	NewBodyPool(op.MaxIncomingPacket)
 	ctx, cancel := context.WithCancel(context.Background())
 	ins.rw = sync.RWMutex{}
+	ins.state.Store(TypeWorking)
 	ins.host = ""
 	ins.isGzip = op.IsGzip
 	ins.ctx = ctx
@@ -44,6 +47,18 @@ func (ins *Server) Serve(listener net.Listener, _handle func(conn IServerConn) e
 	ins.handle = _handle
 	ins.listener = listener
 	go ins.acceptLoop()
+}
+
+func (ins *Server) Stop() error {
+	if ins.state.CompareAndSwap(TypeWorking, TypeStopped) {
+		if ins.cancel != nil {
+			ins.cancel()
+		}
+		if ins.listener != nil {
+			_ = ins.listener.Close()
+		}
+	}
+	return nil
 }
 
 func (ins *Server) acceptLoop() {
