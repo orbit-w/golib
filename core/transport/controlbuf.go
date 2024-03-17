@@ -109,9 +109,11 @@ func (ins *ControlBuffer) Set(buf packet.IPacket) error {
 func (ins *ControlBuffer) OnClose() {
 	ins.mu.Lock()
 	defer ins.mu.Unlock()
-	ins.state = TypeStopped
-	if ins.close != nil {
-		close(ins.close)
+	if ins.state == TypeWorking {
+		ins.state = TypeStopped
+		if ins.close != nil {
+			close(ins.close)
+		}
 	}
 }
 
