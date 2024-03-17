@@ -110,7 +110,9 @@ func (ins *ControlBuffer) OnClose() {
 	ins.mu.Lock()
 	defer ins.mu.Unlock()
 	ins.state = TypeStopped
-	close(ins.close)
+	if ins.close != nil {
+		close(ins.close)
+	}
 }
 
 func (ins *ControlBuffer) flush() {
