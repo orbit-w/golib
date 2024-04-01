@@ -5,7 +5,7 @@ import (
 )
 
 type recvMsg struct {
-	in  packet.IPacket
+	in  []byte
 	err error
 }
 
@@ -30,7 +30,7 @@ func newReceiver() *receiver {
 	}
 }
 
-func (r *receiver) read() (in packet.IPacket, err error) {
+func (r *receiver) read() (in []byte, err error) {
 	select {
 	case msg, ok := <-r.buf.get():
 		if !ok {
@@ -44,7 +44,7 @@ func (r *receiver) read() (in packet.IPacket, err error) {
 	}
 }
 
-func (r *receiver) put(in packet.IPacket, err error) {
+func (r *receiver) put(in []byte, err error) {
 	_ = r.buf.put(recvMsg{
 		in:  in,
 		err: err,

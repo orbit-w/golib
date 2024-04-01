@@ -11,6 +11,11 @@ import (
    @2023 11月 周日 18:32
 */
 
+/*
+	无上限线程安全消息队列的实现
+	增加
+*/
+
 type IUnbounded[V any] interface {
 	Send(msg V) error
 	Receive(consumer func(msg V) bool)

@@ -19,15 +19,14 @@ import (
 */
 
 type TcpServer struct {
-	authed   bool
-	conn     net.Conn
-	codec    *TcpCodec
-	msgCodec *Codec
-	ctx      context.Context
-	cancel   context.CancelFunc
-	sw       *sender_wrapper.SenderWrapper
-	buf      *ControlBuffer
-	r        *receiver
+	authed bool
+	conn   net.Conn
+	codec  *NetCodec
+	ctx    context.Context
+	cancel context.CancelFunc
+	sw     *sender_wrapper.SenderWrapper
+	buf    *ControlBuffer
+	r      *receiver
 }
 
 func NewServerConn(ctx context.Context, _conn net.Conn, ops *ConnOption) IServerConn {
@@ -51,16 +50,14 @@ func NewServerConn(ctx context.Context, _conn net.Conn, ops *ConnOption) IServer
 	return ts
 }
 
-// Send TcpServer obj does not implicitly call IPacket.Return to return the
-// packet to the pool, and the user needs to explicitly call it.
-func (ts *TcpServer) Send(data packet.IPacket) (err error) {
-	pack := ts.msgCodec.encode(data, TypeMessageRaw)
+func (ts *TcpServer) Send(data []byte) (err error) {
+	pack := packHeadByte(data, TypeMessageRaw)
 	err = ts.buf.Set(pack)
 	pack.Return()
 	return
 }
 
-func (ts *TcpServer) Recv() (packet.IPacket, error) {
+func (ts *TcpServer) Recv() ([]byte, error) {
 	return ts.r.read()
 }
 
@@ -129,21 +126,23 @@ func (ts *TcpServer) OnData(data packet.IPacket) error {
 	for len(data.Remain()) > 0 {
 		if bytes, err := data.ReadBytes32(); err == nil {
 			reader := packet.Reader(bytes)
-			ts.HandleData(reader)
+			_ = ts.HandleData(reader)
 		}
 	}
 	return nil
 }
 
-func (ts *TcpServer) HandleData(in packet.IPacket) {
-	mt, data, _ := ts.msgCodec.decode(in)
-	switch mt {
-	case TypeMessageHeartbeat:
-		ack := ts.msgCodec.encode(nil, TypeMessageHeartbeatAck)
-		_ = ts.buf.Set(ack)
-		ack.Return()
-	case TypeMessageHeartbeatAck:
-	default:
-		ts.r.put(data, nil)
-	}
+func (ts *TcpServer) HandleData(in packet.IPacket) error {
+	err := unpackHeadByte(in, func(head int8, data []byte) {
+		switch head {
+		case TypeMessageHeartbeat:
+			ack := packHeadByte(nil, TypeMessageHeartbeatAck)
+			_ = ts.buf.Set(ack)
+			ack.Return()
+		case TypeMessageHeartbeatAck:
+		default:
+			ts.r.put(data, nil)
+		}
+	})
+	return err
 }

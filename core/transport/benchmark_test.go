@@ -2,7 +2,6 @@ package transport
 
 import (
 	"errors"
-	"github.com/orbit-w/golib/bases/packet"
 	"io"
 	"log"
 	"testing"
@@ -37,8 +36,7 @@ func Benchmark_Send_Test(b *testing.B) {
 		}
 	}()
 
-	w := packet.Writer()
-	w.Write([]byte{1})
+	w := []byte{1}
 	b.ResetTimer()
 	b.StartTimer()
 	defer b.StopTimer()

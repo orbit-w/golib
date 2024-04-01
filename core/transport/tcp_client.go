@@ -29,10 +29,9 @@ type TcpClient struct {
 	remoteNodeId  string
 	currentNodeId string
 
-	ctx      context.Context
-	cancel   context.CancelFunc
-	codec    *TcpCodec
-	msgCodec *Codec
+	ctx    context.Context
+	cancel context.CancelFunc
+	codec  *NetCodec
 
 	conn    net.Conn
 	buf     *ControlBuffer
@@ -66,14 +65,14 @@ func DialWithOps(remoteAddr string, _ops ...*DialOption) IConn {
 
 // Write TcpClient obj does not implicitly call IPacket.Return to return the
 // packet to the pool, and the user needs to explicitly call it.
-func (tc *TcpClient) Write(out packet.IPacket) error {
-	pack := tc.msgCodec.encode(out, TypeMessageRaw)
+func (tc *TcpClient) Write(out []byte) error {
+	pack := packHeadByte(out, TypeMessageRaw)
 	defer pack.Return()
 	err := tc.buf.Set(pack)
 	return err
 }
 
-func (tc *TcpClient) Recv() (packet.IPacket, error) {
+func (tc *TcpClient) Recv() ([]byte, error) {
 	return tc.r.read()
 }
 
@@ -209,21 +208,22 @@ func (tc *TcpClient) recv(header []byte, body []byte) (packet.IPacket, error) {
 }
 
 func (tc *TcpClient) decodeRspAndDispatch(body packet.IPacket) error {
-	mt, data, _ := tc.msgCodec.decode(body)
-	switch mt {
-	case TypeMessageHeartbeat, TypeMessageHeartbeatAck:
-		return nil
-	default:
-		if data != nil {
-			tc.r.put(data, nil)
+	err := unpackHeadByte(body, func(head int8, data []byte) {
+		switch head {
+		case TypeMessageHeartbeat, TypeMessageHeartbeatAck:
+			return
+		default:
+			if data != nil && len(data) != 0 {
+				tc.r.put(data, nil)
+			}
 		}
-	}
-	return nil
+	})
+	return err
 }
 
 func (tc *TcpClient) keepalive() {
 	ticker := time.NewTicker(time.Second)
-	ping := tc.msgCodec.encode(nil, TypeMessageHeartbeat)
+	ping := packHeadByte(nil, TypeMessageHeartbeat)
 	defer ping.Return()
 
 	prev := time.Now().Unix()

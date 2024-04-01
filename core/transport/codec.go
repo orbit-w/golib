@@ -1,6 +1,13 @@
 package transport
 
-import "github.com/orbit-w/golib/bases/packet"
+import (
+	"encoding/binary"
+	"github.com/orbit-w/golib/bases/packet"
+	"io"
+	"log"
+	"net"
+	"time"
+)
 
 /*
    @Author: orbit-w
@@ -8,28 +15,98 @@ import "github.com/orbit-w/golib/bases/packet"
    @2023 12月 周六 20:41
 */
 
-type Codec struct {
+const (
+	gzipSize = 1
+)
+
+// NetCodec TODO: 不支持压缩
+type NetCodec struct {
+	isGzip          bool //压缩标识符（建议超过100byte消息进行压缩）
+	maxIncomingSize uint32
 }
 
-func (c *Codec) encode(data packet.IPacket, mt int8) packet.IPacket {
+func NewTcpCodec(max uint32, _isGzip bool) *NetCodec {
+	return &NetCodec{
+		isGzip:          _isGzip,
+		maxIncomingSize: max,
+	}
+}
+
+// EncodeBody 消息编码协议 body: size<int32> | gzipped<bool> | body<bytes>
+func (codec *NetCodec) EncodeBody(body packet.IPacket) packet.IPacket {
+	defer body.Return()
+	pack := packet.Writer()
+	//TODO: 默认 gzip 为 false
+	codec.buildPacket(pack, body, false)
+	return pack
+}
+
+func (codec *NetCodec) BlockDecodeBody(conn net.Conn, header, body []byte) (packet.IPacket, error) {
+	err := conn.SetReadDeadline(time.Now().Add(ReadTimeout))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = io.ReadFull(conn, header)
+	if err != nil {
+		if err != io.EOF && !IsClosedConnError(err) {
+			log.Println("[NetCodec] [func:BlockDecodeBody] receive data head failed: ", err.Error())
+		}
+		return nil, err
+	}
+
+	size := binary.BigEndian.Uint32(header)
+	if size > codec.maxIncomingSize {
+		return nil, ExceedMaxIncomingPacket(size)
+	}
+
+	body = body[:size]
+	if _, err = io.ReadFull(conn, body); err != nil {
+		return nil, ReadBodyFailed(err)
+	}
+	buf := packet.Writer()
+	buf.Write(body)
+
+	//TODO:gzip
+	_, err = buf.ReadBool()
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
+// body: size<int32> | gzipped<byte> | body<bytes>
+func (codec *NetCodec) buildPacket(buf, data packet.IPacket, gzipped bool) {
+	size := data.Len()
+	buf.WriteInt32(int32(size) + gzipSize)
+	buf.WriteBool(gzipped)
+	buf.Write(data.Data())
+}
+
+func (codec *NetCodec) checkPacketSize(header []byte) error {
+	if size := binary.BigEndian.Uint32(header); size > codec.maxIncomingSize {
+		return ExceedMaxIncomingPacket(size)
+	}
+	return nil
+}
+
+func packHeadByte(data []byte, mt int8) packet.IPacket {
 	writer := packet.Writer()
 	writer.WriteInt8(mt)
-	if data != nil && len(data.Remain()) > 0 {
-		writer.Write(data.Remain())
+	if data != nil && len(data) > 0 {
+		writer.Write(data)
 	}
 	return writer
 }
 
-func (c *Codec) decode(data packet.IPacket) (mt int8, writer packet.IPacket, err error) {
-	defer data.Return()
-	mt, err = data.ReadInt8()
+func unpackHeadByte(pack packet.IPacket, handle func(h int8, data []byte)) error {
+	defer pack.Return()
+	head, err := pack.ReadInt8()
 	if err != nil {
-		return
+		return err
 	}
 
-	if len(data.Remain()) > 0 {
-		writer = packet.Writer()
-		writer.Write(data.Remain())
-	}
-	return
+	data := pack.CopyRemain()
+	handle(head, data)
+	return nil
 }

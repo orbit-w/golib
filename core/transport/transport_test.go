@@ -2,7 +2,6 @@ package transport
 
 import (
 	"errors"
-	"github.com/orbit-w/golib/bases/packet"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
@@ -39,12 +38,11 @@ func Test_Transport(t *testing.T) {
 				}
 				break
 			}
-			log.Println("recv response: ", in.Data()[0])
+			log.Println("recv response: ", in[0])
 		}
 	}()
 
-	w := packet.Writer()
-	w.Write([]byte{1})
+	w := []byte{1}
 	_ = conn.Write(w)
 
 	time.Sleep(time.Second * 10)
@@ -70,7 +68,6 @@ func Serve(t TestingT, host string) {
 				if err = conn.Send(in); err != nil {
 					log.Println("server response failed: ", err.Error())
 				}
-				in.Return()
 			}
 			return nil
 		})

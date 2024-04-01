@@ -1,9 +1,5 @@
 package transport
 
-import (
-	"github.com/orbit-w/golib/bases/packet"
-)
-
 /*
    @Author: orbit-w
    @File: transport
@@ -15,14 +11,14 @@ import (
 // A ClientConn have one actual connections to the endpoint
 // based on configuration
 type IConn interface {
-	Write(data packet.IPacket) error
-	Recv() (packet.IPacket, error)
+	Write(data []byte) error
+	Recv() ([]byte, error)
 	Close() error
 }
 
 type IServerConn interface {
-	Send(data packet.IPacket) error
-	Recv() (packet.IPacket, error)
+	Send(data []byte) error
+	Recv() ([]byte, error)
 	Close() error
 }
 
