@@ -99,13 +99,14 @@ func packHeadByte(data []byte, mt int8) packet.IPacket {
 	return writer
 }
 
-func unpackHeadByte(pack packet.IPacket) (int8, []byte, error) {
+func unpackHeadByte(pack packet.IPacket, handle func(h int8, data []byte)) error {
 	defer pack.Return()
 	head, err := pack.ReadInt8()
 	if err != nil {
-		return 0, nil, err
+		return err
 	}
 
 	data := pack.CopyRemain()
-	return head, data, nil
+	handle(head, data)
+	return nil
 }
