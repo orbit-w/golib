@@ -208,17 +208,18 @@ func (tc *TcpClient) recv(header []byte, body []byte) (packet.IPacket, error) {
 }
 
 func (tc *TcpClient) decodeRspAndDispatch(body packet.IPacket) error {
-	err := unpackHeadByte(body, func(head int8, data []byte) {
-		switch head {
-		case TypeMessageHeartbeat, TypeMessageHeartbeatAck:
-			return
-		default:
-			if data != nil && len(data) != 0 {
-				tc.r.put(data, nil)
-			}
+	head, data, err := unpackHeadByte(body)
+	if err != nil {
+		return err
+	}
+	switch head {
+	case TypeMessageHeartbeat, TypeMessageHeartbeatAck:
+	default:
+		if data != nil && len(data) != 0 {
+			tc.r.put(data, nil)
 		}
-	})
-	return err
+	}
+	return nil
 }
 
 func (tc *TcpClient) keepalive() {

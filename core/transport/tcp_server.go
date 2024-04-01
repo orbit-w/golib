@@ -133,16 +133,18 @@ func (ts *TcpServer) OnData(data packet.IPacket) error {
 }
 
 func (ts *TcpServer) HandleData(in packet.IPacket) error {
-	err := unpackHeadByte(in, func(head int8, data []byte) {
-		switch head {
-		case TypeMessageHeartbeat:
-			ack := packHeadByte(nil, TypeMessageHeartbeatAck)
-			_ = ts.buf.Set(ack)
-			ack.Return()
-		case TypeMessageHeartbeatAck:
-		default:
-			ts.r.put(data, nil)
-		}
-	})
-	return err
+	head, data, err := unpackHeadByte(in)
+	if err != nil {
+		return err
+	}
+	switch head {
+	case TypeMessageHeartbeat:
+		ack := packHeadByte(nil, TypeMessageHeartbeatAck)
+		_ = ts.buf.Set(ack)
+		ack.Return()
+	case TypeMessageHeartbeatAck:
+	default:
+		ts.r.put(data, nil)
+	}
+	return nil
 }
