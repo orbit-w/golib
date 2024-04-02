@@ -16,7 +16,7 @@ import (
 
 func Benchmark_Send_Test(b *testing.B) {
 	host := "127.0.0.1:6800"
-	Serve(b, host)
+	ServeTest(b, host)
 	conn := DialWithOps(host, &DialOption{
 		RemoteNodeId:  "node_0",
 		CurrentNodeId: "node_1",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/orbit-w/golib/bases/packet"
+	"github.com/orbit-w/golib/core/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
@@ -18,6 +19,10 @@ import (
    @2023 11月 周日 21:03
 */
 
+func init() {
+	network.RegProtocol(network.TCP, NewServerConn)
+}
+
 type TcpServer struct {
 	authed bool
 	conn   net.Conn
@@ -29,14 +34,14 @@ type TcpServer struct {
 	r      *receiver
 }
 
-func NewServerConn(ctx context.Context, _conn net.Conn, ops *ConnOption) IServerConn {
+func NewServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) network.IServerConn {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	cCtx, cancel := context.WithCancel(ctx)
 	ts := &TcpServer{
 		conn:   _conn,
-		codec:  NewTcpCodec(ops.MaxIncomingPacket, false),
+		codec:  NewTcpCodec(maxIncomingPacket, false),
 		ctx:    cCtx,
 		cancel: cancel,
 		r:      newReceiver(),
@@ -44,9 +49,9 @@ func NewServerConn(ctx context.Context, _conn net.Conn, ops *ConnOption) IServer
 
 	sw := sender_wrapper.NewSender(ts.SendData)
 	ts.sw = sw
-	ts.buf = NewControlBuffer(ops.MaxIncomingPacket, ts.sw)
+	ts.buf = NewControlBuffer(maxIncomingPacket, ts.sw)
 
-	go ts.HandleLoop()
+	go ts.HandleLoop(head, body)
 	return ts
 }
 
@@ -77,14 +82,7 @@ func (ts *TcpServer) SendData(body packet.IPacket) error {
 	return err
 }
 
-func (ts *TcpServer) HandleLoop() {
-	header := headPool.Get().(*Buffer)
-	buffer := bodyPool.Get().(*Buffer)
-	defer func() {
-		headPool.Put(header)
-		bodyPool.Put(buffer)
-	}()
-
+func (ts *TcpServer) HandleLoop(header, body []byte) {
 	var (
 		err  error
 		data packet.IPacket
@@ -110,7 +108,7 @@ func (ts *TcpServer) HandleLoop() {
 	}()
 
 	for {
-		data, err = ts.codec.BlockDecodeBody(ts.conn, header.Bytes, buffer.Bytes)
+		data, err = ts.codec.BlockDecodeBody(ts.conn, header, body)
 		if err != nil {
 			return
 		}

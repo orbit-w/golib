@@ -2,6 +2,7 @@ package transport
 
 import (
 	"errors"
+	"github.com/orbit-w/golib/core/network"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
@@ -17,7 +18,7 @@ var (
 
 func Test_Transport(t *testing.T) {
 	host := "127.0.0.1:6800"
-	Serve(t, host)
+	ServeTest(t, host)
 
 	conn := DialWithOps(host, &DialOption{
 		RemoteNodeId:  "node_0",
@@ -48,13 +49,13 @@ func Test_Transport(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 
-func Serve(t TestingT, host string) {
+func ServeTest(t TestingT, host string) {
 	ServeOnce.Do(func() {
 		listener, err := net.Listen("tcp", host)
 		assert.NoError(t, err)
 		log.Println("start serve...")
-		server := new(Server)
-		server.Serve(listener, func(conn IServerConn) error {
+		server := new(network.Server)
+		server.Serve(network.TCP, listener, func(conn network.IServerConn) error {
 			for {
 				in, err := conn.Recv()
 				if err != nil {

@@ -1,13 +1,8 @@
 package transport
 
 import (
-	"context"
-	"log"
+	"github.com/orbit-w/golib/core/network"
 	"net"
-	"runtime/debug"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 /*
@@ -16,93 +11,41 @@ import (
    @2023 11月 周五 17:04
 */
 
-type Server struct {
-	isGzip   bool
-	ccu      int32
-	state    atomic.Uint32
-	host     string
-	listener net.Listener
-	rw       sync.RWMutex
-	ctx      context.Context
-	cancel   context.CancelFunc
-
-	handle func(conn IServerConn) error
-}
-
 type AcceptorOptions struct {
 	MaxIncomingPacket uint32
 	IsGzip            bool
 }
 
-func (ins *Server) Serve(listener net.Listener, _handle func(conn IServerConn) error, ops ...AcceptorOptions) {
-	op := parseAndWrapOP(ops...)
-	NewBodyPool(op.MaxIncomingPacket)
-	ctx, cancel := context.WithCancel(context.Background())
-	ins.rw = sync.RWMutex{}
-	ins.state.Store(TypeWorking)
-	ins.host = ""
-	ins.isGzip = op.IsGzip
-	ins.ctx = ctx
-	ins.cancel = cancel
-	ins.handle = _handle
-	ins.listener = listener
-	go ins.acceptLoop()
+type IServer interface {
+	Stop() error
 }
 
-func (ins *Server) Stop() error {
-	if ins.state.CompareAndSwap(TypeWorking, TypeStopped) {
-		if ins.cancel != nil {
-			ins.cancel()
-		}
-		if ins.listener != nil {
-			_ = ins.listener.Close()
-		}
-	}
-	return nil
+type IServerConn interface {
+	Send(data []byte) error
+	Recv() ([]byte, error)
+	Close() error
 }
 
-func (ins *Server) acceptLoop() {
-	for {
-		conn, err := ins.listener.Accept()
-		if err != nil {
-			select {
-			case <-ins.ctx.Done():
-				return
-			default:
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
-		}
-
-		ins.handleConn(NewServerConn(ins.ctx, conn, &ConnOption{
-			MaxIncomingPacket: MaxIncomingPacket,
-		}))
-	}
+func Serve(p string, listener net.Listener,
+	_handle func(conn IServerConn) error, ops ...network.AcceptorOptions) IServer {
+	
+	server := new(network.Server)
+	protocol := parseProtocol(p)
+	server.Serve(protocol, listener, func(conn network.IServerConn) error {
+		return _handle(conn)
+	}, ops...)
+	return server
 }
 
-func (ins *Server) handleConn(conn IServerConn) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Println(r)
-				log.Println("stack", string(debug.Stack()))
-			}
-			_ = conn.Close()
-		}()
-
-		if appErr := ins.handle(conn); appErr != nil {
-			//TODO:
-		}
-	}()
-}
-
-func parseAndWrapOP(ops ...AcceptorOptions) AcceptorOptions {
-	var op AcceptorOptions
-	if len(ops) > 0 {
-		op = ops[0]
+func parseProtocol(p string) network.Protocol {
+	switch p {
+	case "tcp":
+		return network.TCP
+	case "udp":
+		return network.UDP
+	case "kcp":
+		return network.KCP
+	default:
+		return network.TCP
 	}
-	if op.MaxIncomingPacket == 0 {
-		op.MaxIncomingPacket = MaxIncomingPacket
-	}
-	return op
 }

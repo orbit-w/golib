@@ -16,12 +16,6 @@ type IConn interface {
 	Close() error
 }
 
-type IServerConn interface {
-	Send(data []byte) error
-	Recv() ([]byte, error)
-	Close() error
-}
-
 type DialOption struct {
 	RemoteNodeId      string
 	CurrentNodeId     string
