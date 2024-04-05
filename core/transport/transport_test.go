@@ -2,7 +2,6 @@ package transport
 
 import (
 	"errors"
-	"github.com/orbit-w/golib/core/network"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
@@ -33,7 +32,7 @@ func Test_Transport(t *testing.T) {
 			in, err := conn.Recv()
 			if err != nil {
 				if IsCancelError(err) || errors.Is(err, io.EOF) {
-					log.Println("Recv failed: ", err.Error())
+					log.Println("EOF")
 				} else {
 					log.Println("Recv failed: ", err.Error())
 				}
@@ -54,14 +53,19 @@ func ServeTest(t TestingT, host string) {
 		listener, err := net.Listen("tcp", host)
 		assert.NoError(t, err)
 		log.Println("start serve...")
-		server := new(network.Server)
-		server.Serve(network.TCP, listener, func(conn network.IServerConn) error {
+
+		Serve("tcp", listener, func(conn IServerConn) {
 			for {
 				in, err := conn.Recv()
 				if err != nil {
 					if IsClosedConnError(err) {
 						break
 					}
+
+					if IsCancelError(err) || errors.Is(err, io.EOF) {
+						break
+					}
+
 					log.Println("conn read stream failed: ", err.Error())
 					break
 				}
@@ -70,7 +74,6 @@ func ServeTest(t TestingT, host string) {
 					log.Println("server response failed: ", err.Error())
 				}
 			}
-			return nil
 		})
 	})
 }

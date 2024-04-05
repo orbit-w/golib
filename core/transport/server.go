@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"github.com/orbit-w/golib/core/network"
 	"net"
 )
@@ -26,13 +27,22 @@ type IServerConn interface {
 	Close() error
 }
 
+func init() {
+	RegProtocol(network.TCP, NewServerConn)
+}
+
 func Serve(p string, listener net.Listener,
-	_handle func(conn IServerConn) error, ops ...network.AcceptorOptions) IServer {
-	
+	_handle func(conn IServerConn), ops ...network.AcceptorOptions) IServer {
+
 	server := new(network.Server)
 	protocol := parseProtocol(p)
-	server.Serve(protocol, listener, func(conn network.IServerConn) error {
-		return _handle(conn)
+	factory := dispatchProtocol(protocol)
+	server.Serve(protocol, listener, func(ctx context.Context, generic net.Conn, maxIncomingPacket uint32, head, body []byte) {
+		conn := factory(ctx, generic, maxIncomingPacket, head, body)
+		defer func() {
+			_ = conn.Close()
+		}()
+		_handle(conn)
 	}, ops...)
 	return server
 }

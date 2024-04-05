@@ -33,11 +33,9 @@ type Server struct {
 	rw                sync.RWMutex
 	ctx               context.Context
 	cancel            context.CancelFunc
-	factory           ConnFactory
+	handle            ConnHandle
 	bodyPool          *sync.Pool
 	headPool          *sync.Pool
-
-	handle func(conn IServerConn) error
 }
 
 type AcceptorOptions struct {
@@ -45,7 +43,7 @@ type AcceptorOptions struct {
 	IsGzip            bool
 }
 
-func (ins *Server) Serve(p Protocol, listener net.Listener, _handle func(conn IServerConn) error, ops ...AcceptorOptions) {
+func (ins *Server) Serve(p Protocol, listener net.Listener, _handle ConnHandle, ops ...AcceptorOptions) {
 	op := parseAndWrapOP(ops...)
 	ctx, cancel := context.WithCancel(context.Background())
 	ins.rw = sync.RWMutex{}
@@ -59,7 +57,6 @@ func (ins *Server) Serve(p Protocol, listener net.Listener, _handle func(conn IS
 	ins.listener = listener
 
 	ins.protocol = p
-	ins.factory = DispatchProtocol(p)
 
 	ins.headPool = NewBufferPool(HeadLen)
 	ins.bodyPool = NewBufferPool(ins.maxIncomingPacket)
@@ -100,21 +97,17 @@ func (ins *Server) handleConn(conn net.Conn) {
 	go func() {
 		head := ins.headPool.Get().(*Buffer)
 		body := ins.bodyPool.Get().(*Buffer)
-		generic := ins.factory(ins.ctx, conn, ins.maxIncomingPacket, head.Bytes, body.Bytes)
 
 		defer func() {
 			if r := recover(); r != nil {
 				log.Println(r)
 				log.Println("stack", string(debug.Stack()))
 			}
-			_ = generic.Close()
 			ins.headPool.Put(head)
 			ins.bodyPool.Put(body)
 		}()
 
-		if appErr := ins.handle(generic); appErr != nil {
-			//TODO:
-		}
+		ins.handle(ins.ctx, conn, ins.maxIncomingPacket, head.Bytes, body.Bytes)
 	}()
 }
 

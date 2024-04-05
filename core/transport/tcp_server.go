@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/orbit-w/golib/bases/packet"
-	"github.com/orbit-w/golib/core/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
@@ -19,10 +18,6 @@ import (
    @2023 11月 周日 21:03
 */
 
-func init() {
-	network.RegProtocol(network.TCP, NewServerConn)
-}
-
 type TcpServer struct {
 	authed bool
 	conn   net.Conn
@@ -34,7 +29,7 @@ type TcpServer struct {
 	r      *receiver
 }
 
-func NewServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) network.IServerConn {
+func NewServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) IServerConn {
 	if ctx == nil {
 		ctx = context.Background()
 	}

@@ -39,7 +39,6 @@ func Benchmark_Send_Test(b *testing.B) {
 	w := []byte{1}
 	b.ResetTimer()
 	b.StartTimer()
-	defer b.StopTimer()
 	for i := 0; i < b.N; i++ {
 		_ = conn.Write(w)
 	}

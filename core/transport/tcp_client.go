@@ -102,6 +102,7 @@ func (tc *TcpClient) handleDial(_ *DialOption) {
 		tc.mu.Lock()
 		defer tc.mu.Unlock()
 		tc.state.Store(StatusDisconnected)
+		fmt.Println("retry failed max limit")
 		tc.r.onClose(ErrCanceled)
 		return
 	}
