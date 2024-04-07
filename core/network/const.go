@@ -1,5 +1,7 @@
 package network
 
+import "time"
+
 /*
    @Author: orbit-w
    @File: const
@@ -12,6 +14,8 @@ const (
 )
 
 const (
-	MaxIncomingPacket = 1<<18 - 1
+	MaxIncomingPacket = 1048576
 	HeadLen           = 4 //包头字节数
+
+	ReadTimeout = time.Second * 60
 )
