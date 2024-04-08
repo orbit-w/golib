@@ -63,6 +63,28 @@ func (c *Codec) EncodeBody(body packet.IPacket, gzipped bool) (packet.IPacket, e
 	return buf, nil
 }
 
+func (c *Codec) EncodeBodyRaw(body []byte, gzipped bool) (packet.IPacket, error) {
+	buf := packet.Writer()
+	writer := func(data []byte) {
+		buf.WriteInt32(int32(len(data)) + gzipSize)
+		buf.WriteBool(gzipped)
+		buf.Write(data)
+	}
+
+	if gzipped {
+		compressed, err := EncodeGzip(body)
+		if err != nil {
+			log.Println("[Codec] [func:encodeBody] encode gzip failed: ", err.Error())
+			return nil, err
+		}
+		writer(compressed)
+	} else {
+		writer(body)
+	}
+
+	return buf, nil
+}
+
 func (c *Codec) BlockDecodeBody(conn net.Conn, header, body []byte) (packet.IPacket, error) {
 	err := conn.SetReadDeadline(time.Now().Add(c.readTimeout))
 	if err != nil {

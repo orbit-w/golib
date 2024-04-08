@@ -18,23 +18,56 @@ import (
 */
 
 type IStream interface {
+	Send(body []byte) error
+	SendPack(body packet.IPacket) error
 	Recv() (data []byte, err error)
 	Close() error
 }
 
 type AgentStream struct {
 	conn         net.Conn
+	conf         *Config
 	codec        *network.Codec
 	r            *network.BlockReceiver
-	handleStream func(stream IStream) error
+	writeTimeout time.Duration
 }
 
-func NewAgentStream(handle func(stream IStream) error, maxIncomingPacket uint32, isGzip bool, readTimeout time.Duration) *AgentStream {
+func NewAgentStream(_conn net.Conn, _conf *Config) *AgentStream {
 	return &AgentStream{
-		codec:        network.NewCodec(maxIncomingPacket, isGzip, readTimeout),
+		conn:         _conn,
+		conf:         _conf,
+		codec:        network.NewCodec(_conf.MaxIncomingPacket, _conf.IsGzip, _conf.ReadTimeout),
 		r:            network.NewBlockReceiver(),
-		handleStream: handle,
+		writeTimeout: _conf.WriteTimeout,
 	}
+}
+
+func (stream *AgentStream) Send(body []byte) error {
+	conf := stream.conf
+	out, err := stream.codec.EncodeBodyRaw(body, conf.IsGzip)
+	if err != nil {
+		return err
+	}
+	defer out.Return()
+	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.conf.WriteTimeout)); err != nil {
+		return err
+	}
+	_, err = stream.conn.Write(out.Data())
+	return err
+}
+
+func (stream *AgentStream) SendPack(body packet.IPacket) error {
+	conf := stream.conf
+	out, err := stream.codec.EncodeBody(body, conf.IsGzip)
+	if err != nil {
+		return err
+	}
+	defer out.Return()
+	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.conf.WriteTimeout)); err != nil {
+		return err
+	}
+	_, err = stream.conn.Write(out.Data())
+	return err
 }
 
 func (stream *AgentStream) Recv() (data []byte, err error) {
@@ -68,7 +101,7 @@ func (stream *AgentStream) handleLoop(conn net.Conn, head, body []byte) {
 			if err == io.EOF || network.IsClosedConnError(err) {
 				//连接正常断开
 			} else {
-				log.Println(fmt.Errorf("[AgentStream] stream disconnected: %s", err.Error()))
+				log.Println(fmt.Errorf("[AgentStream] stream disconnected: %server", err.Error()))
 			}
 		}
 	}()

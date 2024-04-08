@@ -30,8 +30,7 @@ func NewStreamService(handle func(stream IStream) error, conf *Config) *StreamSe
 
 func (s *StreamService) Stream(conn net.Conn, _ *string, _ *string) error {
 	conf := s.conf
-	stream := NewAgentStream(s.handle, conf.MaxIncomingPacket, conf.IsGzip, conf.ReadTimeout)
-	stream.conn = conn
+	stream := NewAgentStream(conn, conf)
 	headBuf := s.headPool.Get().(*network.Buffer)
 	bodyBuf := s.bodyPool.Get().(*network.Buffer)
 
@@ -42,6 +41,5 @@ func (s *StreamService) Stream(conn net.Conn, _ *string, _ *string) error {
 	}()
 
 	go stream.handleLoop(conn, headBuf.Bytes, bodyBuf.Bytes)
-	handle := stream.handleStream
-	return handle(stream)
+	return s.handle(stream)
 }
