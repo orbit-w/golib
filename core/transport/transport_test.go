@@ -2,10 +2,8 @@ package transport
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
-	"net"
 	"sync"
 	"testing"
 	"time"
@@ -17,7 +15,7 @@ var (
 
 func Test_Transport(t *testing.T) {
 	host := "127.0.0.1:6800"
-	ServeTest(t, host)
+	s := ServeTest(t, host)
 
 	conn := DialWithOps(host, &DialOption{
 		RemoteNodeId:  "node_0",
@@ -46,15 +44,16 @@ func Test_Transport(t *testing.T) {
 	_ = conn.Write(w)
 
 	time.Sleep(time.Second * 10)
+	_ = s.Stop()
 }
 
-func ServeTest(t TestingT, host string) {
+func ServeTest(t TestingT, host string) IServer {
+	var (
+		server IServer
+		err    error
+	)
 	ServeOnce.Do(func() {
-		listener, err := net.Listen("tcp", host)
-		assert.NoError(t, err)
-		log.Println("start serve...")
-
-		Serve("tcp", listener, func(conn IServerConn) {
+		server, err = Serve("tcp", host, func(conn IServerConn) {
 			for {
 				in, err := conn.Recv()
 				if err != nil {
@@ -76,6 +75,11 @@ func ServeTest(t TestingT, host string) {
 			}
 		})
 	})
+
+	if err != nil {
+		panic(err.Error())
+	}
+	return server
 }
 
 // TestingT is an interface wrapper around *testing.T

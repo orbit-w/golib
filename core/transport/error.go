@@ -13,10 +13,9 @@ import (
 */
 
 var (
-	ErrCanceled         = errors.New("context canceled")
-	ErrDeadlineExceeded = errors.New("context deadline exceeded")
-	ErrDisconnected     = errors.New("disconnected")
-	ErrMaxOfRetry       = errors.New(`error_max_of_retry`)
+	ErrCanceled     = errors.New("context canceled")
+	ErrDisconnected = errors.New("disconnected")
+	ErrMaxOfRetry   = errors.New(`error_max_of_retry`)
 )
 
 func IsClosedConnError(err error) bool {

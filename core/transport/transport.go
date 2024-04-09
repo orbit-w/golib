@@ -1,5 +1,7 @@
 package transport
 
+import "github.com/orbit-w/golib/core/network"
+
 /*
    @Author: orbit-w
    @File: transport
@@ -14,6 +16,11 @@ type IConn interface {
 	Write(data []byte) error
 	Recv() ([]byte, error)
 	Close() error
+}
+
+type ITransportServer interface {
+	Serve(host string, _handle func(conn IServerConn), op network.AcceptorOptions) error
+	Stop() error
 }
 
 type DialOption struct {

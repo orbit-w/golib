@@ -36,7 +36,6 @@ func NewTcpCodec(max uint32, _isGzip bool) *NetCodec {
 func (codec *NetCodec) EncodeBody(body packet.IPacket) packet.IPacket {
 	defer body.Return()
 	pack := packet.Writer()
-	//TODO: 默认 gzip 为 false
 	codec.buildPacket(pack, body, false)
 	return pack
 }

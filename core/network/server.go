@@ -64,6 +64,8 @@ func (ins *Server) Serve(p Protocol, listener net.Listener, _handle ConnHandle, 
 	go ins.acceptLoop()
 }
 
+// Stop stops the server
+// 具有可重入性且线程安全, 这意味着这个方法可以被并发多次调用，而不会影响程序的状态或者产生不可预期的结果
 func (ins *Server) Stop() error {
 	if ins.state.CompareAndSwap(TypeWorking, TypeStopped) {
 		if ins.cancel != nil {
@@ -111,13 +113,23 @@ func (ins *Server) handleConn(conn net.Conn) {
 	}()
 }
 
+func DefaultAcceptorOptions() AcceptorOptions {
+	return AcceptorOptions{
+		MaxIncomingPacket: MaxIncomingPacket,
+		IsGzip:            false,
+	}
+}
+
 func parseAndWrapOP(ops ...AcceptorOptions) AcceptorOptions {
 	var op AcceptorOptions
 	if len(ops) > 0 {
 		op = ops[0]
+		if op.MaxIncomingPacket == 0 {
+			op.MaxIncomingPacket = MaxIncomingPacket
+		}
+	} else {
+		op = DefaultAcceptorOptions()
 	}
-	if op.MaxIncomingPacket == 0 {
-		op.MaxIncomingPacket = MaxIncomingPacket
-	}
+
 	return op
 }

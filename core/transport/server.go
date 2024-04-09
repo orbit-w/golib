@@ -1,9 +1,8 @@
 package transport
 
 import (
-	"context"
 	"github.com/orbit-w/golib/core/network"
-	"net"
+	"time"
 )
 
 /*
@@ -27,24 +26,41 @@ type IServerConn interface {
 	Close() error
 }
 
-func init() {
-	RegProtocol(network.TCP, NewServerConn)
+func Serve(pStr, host string,
+	_handle func(conn IServerConn)) (IServer, error) {
+	config := DefaultServerConfig()
+	op := config.ToAcceptorOptions()
+	protocol := parseProtocol(pStr)
+	factory := GetFactory(protocol)
+	server := factory()
+	if err := server.Serve(host, _handle, op); err != nil {
+		return nil, err
+	}
+
+	return server, nil
 }
 
-func Serve(p string, listener net.Listener,
-	_handle func(conn IServerConn), ops ...network.AcceptorOptions) IServer {
+type Config struct {
+	MaxIncomingPacket uint32
+	IsGzip            bool
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+}
 
-	server := new(network.Server)
-	protocol := parseProtocol(p)
-	factory := dispatchProtocol(protocol)
-	server.Serve(protocol, listener, func(ctx context.Context, generic net.Conn, maxIncomingPacket uint32, head, body []byte) {
-		conn := factory(ctx, generic, maxIncomingPacket, head, body)
-		defer func() {
-			_ = conn.Close()
-		}()
-		_handle(conn)
-	}, ops...)
-	return server
+func (c Config) ToAcceptorOptions() network.AcceptorOptions {
+	return network.AcceptorOptions{
+		MaxIncomingPacket: c.MaxIncomingPacket,
+		IsGzip:            c.IsGzip,
+	}
+}
+
+func DefaultServerConfig() Config {
+	return Config{
+		MaxIncomingPacket: network.MaxIncomingPacket,
+		IsGzip:            false,
+		ReadTimeout:       network.ReadTimeout,
+		WriteTimeout:      WriteTimeout,
+	}
 }
 
 func parseProtocol(p string) network.Protocol {

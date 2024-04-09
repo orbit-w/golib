@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/orbit-w/golib/bases/misc/number_utils"
 	"github.com/orbit-w/golib/bases/packet"
+	"github.com/orbit-w/golib/core/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
@@ -22,21 +23,22 @@ import (
 
 // TcpClient implements the IConn interface with TCP.
 type TcpClient struct {
-	mu            sync.Mutex
-	state         atomic.Uint32
-	lastAck       atomic.Int64
-	remoteAddr    string
-	remoteNodeId  string
-	currentNodeId string
+	mu              sync.Mutex
+	state           atomic.Uint32
+	lastAck         atomic.Int64
+	maxIncomingSize uint32
+	remoteAddr      string
+	remoteNodeId    string
+	currentNodeId   string
 
 	ctx    context.Context
 	cancel context.CancelFunc
-	codec  *NetCodec
+	codec  *network.Codec
 
 	conn    net.Conn
 	buf     *ControlBuffer
 	sw      *sender_wrapper.SenderWrapper
-	r       *receiver
+	r       *network.BlockReceiver
 	dHandle func(remoteNodeId string)
 }
 
@@ -47,16 +49,17 @@ func DialWithOps(remoteAddr string, _ops ...*DialOption) IConn {
 	buf := new(ControlBuffer)
 	BuildControlBuffer(buf, dp.MaxIncomingPacket)
 	tc := &TcpClient{
-		mu:            sync.Mutex{},
-		remoteAddr:    remoteAddr,
-		remoteNodeId:  dp.RemoteNodeId,
-		currentNodeId: dp.CurrentNodeId,
-		dHandle:       dp.DisconnectHandler,
-		buf:           buf,
-		ctx:           ctx,
-		cancel:        cancel,
-		codec:         NewTcpCodec(dp.MaxIncomingPacket, false),
-		r:             newReceiver(),
+		mu:              sync.Mutex{},
+		remoteAddr:      remoteAddr,
+		remoteNodeId:    dp.RemoteNodeId,
+		currentNodeId:   dp.CurrentNodeId,
+		dHandle:         dp.DisconnectHandler,
+		maxIncomingSize: dp.MaxIncomingPacket,
+		buf:             buf,
+		ctx:             ctx,
+		cancel:          cancel,
+		codec:           network.NewCodec(dp.MaxIncomingPacket, false, ReadTimeout),
+		r:               network.NewBlockReceiver(),
 	}
 
 	go tc.handleDial(dp)
@@ -73,7 +76,7 @@ func (tc *TcpClient) Write(out []byte) error {
 }
 
 func (tc *TcpClient) Recv() ([]byte, error) {
-	return tc.r.read()
+	return tc.r.Recv()
 }
 
 func (tc *TcpClient) Close() error {
@@ -103,13 +106,13 @@ func (tc *TcpClient) handleDial(_ *DialOption) {
 		defer tc.mu.Unlock()
 		tc.state.Store(StatusDisconnected)
 		fmt.Println("retry failed max limit")
-		tc.r.onClose(ErrCanceled)
+		tc.r.OnClose(ErrCanceled)
 		return
 	}
 
 	defer func() {
 		if tc.state.CompareAndSwap(StatusConnected, StatusDisconnected) {
-			tc.r.onClose(ErrCanceled)
+			tc.r.OnClose(ErrCanceled)
 		}
 	}()
 
@@ -133,12 +136,15 @@ func (tc *TcpClient) SendData(data packet.IPacket) error {
 }
 
 func (tc *TcpClient) sendData(data packet.IPacket) error {
-	body := tc.codec.EncodeBody(data)
-	if err := tc.conn.SetWriteDeadline(time.Now().Add(WriteTimeout)); err != nil {
+	body, err := tc.codec.EncodeBody(data, false)
+	if err != nil {
+		return err
+	}
+	if err = tc.conn.SetWriteDeadline(time.Now().Add(WriteTimeout)); err != nil {
 		body.Return()
 		return err
 	}
-	_, err := tc.conn.Write(body.Data())
+	_, err = tc.conn.Write(body.Data())
 	body.Return()
 	return err
 }
@@ -157,7 +163,7 @@ func (tc *TcpClient) dial() error {
 
 func (tc *TcpClient) reader() {
 	header := make([]byte, HeadLen)
-	body := make([]byte, tc.codec.maxIncomingSize)
+	body := make([]byte, tc.maxIncomingSize)
 
 	var (
 		err   error
@@ -215,7 +221,7 @@ func (tc *TcpClient) decodeRspAndDispatch(body packet.IPacket) error {
 			return
 		default:
 			if data != nil && len(data) != 0 {
-				tc.r.put(data, nil)
+				tc.r.Put(data, nil)
 			}
 		}
 	})
