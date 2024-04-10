@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
-type SClient interface {
+type ASClient interface {
 	Stream() (IStream, error)
+	Close() error
 }
 
 type Client struct {
@@ -23,7 +24,7 @@ type Client struct {
 	bodyPool *sync.Pool
 }
 
-func NewClient(addr string) *Client {
+func NewClient(addr string) ASClient {
 	conf := DefaultClientConfig()
 	return NewClientByConfig(addr, conf)
 }
@@ -60,7 +61,7 @@ func (c *Client) dialByConfig(conf *ClientConfig) (IStream, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), conf.DialTimeout)
 	defer cancel()
 
-	conn, err := c.xClient.Stream(ctx, make(map[string]string))
+	conn, err := c.xClient.Stream(ctx, map[string]string{"foo": "bar"})
 	if err != nil {
 		return nil, err
 	}

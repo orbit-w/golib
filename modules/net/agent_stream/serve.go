@@ -3,6 +3,8 @@ package agent_stream
 import (
 	"github.com/orbit-w/golib/modules/net/network"
 	"github.com/smallnest/rpcx/server"
+	"github.com/smallnest/rpcx/share"
+	"net"
 	"time"
 )
 
@@ -26,14 +28,10 @@ func (s *Server) Serve(addr string, handle func(stream IStream) error) error {
 func (s *Server) ServeByConfig(addr string, handle func(stream IStream) error, conf *Config) error {
 	parseConfig(conf)
 	s.server = server.NewServer()
-	if err := s.server.RegisterName("StreamService",
-		NewStreamService(handle, conf), ""); err != nil {
-		return New(ErrHeadServe, err.Error())
-	}
-	err := s.server.Serve("tcp", addr)
-	if err != nil {
-		return New(ErrHeadServe, err.Error())
-	}
+	p := server.NewStreamService(addr, func(conn net.Conn, args *share.StreamServiceArgs) {
+		_ = NewStreamService(handle, conf).Stream(conn, nil, nil)
+	}, nil, 1000)
+	s.server.EnableStreamService(share.StreamServiceName, p)
 	return nil
 }
 

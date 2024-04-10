@@ -12,7 +12,7 @@ const (
 	ReadTimeout  = time.Second * 60
 	WriteTimeout = time.Second * 5
 
-	DialTimeout = time.Second * 5
+	DialTimeout = time.Second * 15
 )
 
 const (
