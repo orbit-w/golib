@@ -3,7 +3,7 @@ package agent_stream
 import (
 	"fmt"
 	"github.com/orbit-w/golib/bases/packet"
-	"github.com/orbit-w/golib/core/network"
+	network2 "github.com/orbit-w/golib/modules/net/network"
 	"io"
 	"log"
 	"net"
@@ -26,8 +26,8 @@ type IStream interface {
 
 type AgentStream struct {
 	conn         net.Conn
-	codec        *network.Codec
-	r            *network.BlockReceiver
+	codec        *network2.Codec
+	r            *network2.BlockReceiver
 	writeTimeout time.Duration
 	readTimeout  time.Duration
 }
@@ -35,8 +35,8 @@ type AgentStream struct {
 func NewAgentStream(_conn net.Conn, maxIncoming uint32, isGzip bool, wt, rt time.Duration) *AgentStream {
 	return &AgentStream{
 		conn:         _conn,
-		codec:        network.NewCodec(maxIncoming, isGzip, rt),
-		r:            network.NewBlockReceiver(),
+		codec:        network2.NewCodec(maxIncoming, isGzip, rt),
+		r:            network2.NewBlockReceiver(),
 		writeTimeout: wt,
 	}
 }
@@ -94,16 +94,16 @@ func (stream *AgentStream) handleLoop(conn net.Conn, head, body []byte) {
 			_ = conn.Close()
 		}
 		if err != nil {
-			if err == io.EOF || network.IsClosedConnError(err) {
+			if err == io.EOF || network2.IsClosedConnError(err) {
 				//连接正常断开
-				stream.r.OnClose(network.ErrCanceled)
+				stream.r.OnClose(network2.ErrCanceled)
 			} else {
 				sErr := fmt.Errorf("[AgentStream] stream disconnected error: %s ", err.Error())
 				stream.r.OnClose(sErr)
 				log.Println(sErr)
 			}
 		} else {
-			stream.r.OnClose(network.ErrCanceled)
+			stream.r.OnClose(network2.ErrCanceled)
 		}
 	}()
 

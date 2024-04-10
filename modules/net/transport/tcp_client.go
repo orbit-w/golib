@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/orbit-w/golib/bases/misc/number_utils"
 	"github.com/orbit-w/golib/bases/packet"
-	"github.com/orbit-w/golib/core/network"
+	network2 "github.com/orbit-w/golib/modules/net/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
@@ -33,12 +33,12 @@ type TcpClient struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
-	codec  *network.Codec
+	codec  *network2.Codec
 
 	conn    net.Conn
 	buf     *ControlBuffer
 	sw      *sender_wrapper.SenderWrapper
-	r       *network.BlockReceiver
+	r       *network2.BlockReceiver
 	dHandle func(remoteNodeId string)
 }
 
@@ -58,8 +58,8 @@ func DialWithOps(remoteAddr string, _ops ...*DialOption) IConn {
 		buf:             buf,
 		ctx:             ctx,
 		cancel:          cancel,
-		codec:           network.NewCodec(dp.MaxIncomingPacket, false, ReadTimeout),
-		r:               network.NewBlockReceiver(),
+		codec:           network2.NewCodec(dp.MaxIncomingPacket, false, ReadTimeout),
+		r:               network2.NewBlockReceiver(),
 	}
 
 	go tc.handleDial(dp)

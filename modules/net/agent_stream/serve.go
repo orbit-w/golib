@@ -1,7 +1,7 @@
 package agent_stream
 
 import (
-	"github.com/orbit-w/golib/core/network"
+	"github.com/orbit-w/golib/modules/net/network"
 	"github.com/smallnest/rpcx/server"
 	"time"
 )

@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"github.com/orbit-w/golib/core/network"
+	network2 "github.com/orbit-w/golib/modules/net/network"
 	"time"
 )
 
@@ -47,8 +47,8 @@ type Config struct {
 	WriteTimeout      time.Duration
 }
 
-func (c Config) ToAcceptorOptions() network.AcceptorOptions {
-	return network.AcceptorOptions{
+func (c Config) ToAcceptorOptions() network2.AcceptorOptions {
+	return network2.AcceptorOptions{
 		MaxIncomingPacket: c.MaxIncomingPacket,
 		IsGzip:            c.IsGzip,
 	}
@@ -56,22 +56,22 @@ func (c Config) ToAcceptorOptions() network.AcceptorOptions {
 
 func DefaultServerConfig() Config {
 	return Config{
-		MaxIncomingPacket: network.MaxIncomingPacket,
+		MaxIncomingPacket: network2.MaxIncomingPacket,
 		IsGzip:            false,
-		ReadTimeout:       network.ReadTimeout,
+		ReadTimeout:       network2.ReadTimeout,
 		WriteTimeout:      WriteTimeout,
 	}
 }
 
-func parseProtocol(p string) network.Protocol {
+func parseProtocol(p string) network2.Protocol {
 	switch p {
 	case "tcp":
-		return network.TCP
+		return network2.TCP
 	case "udp":
-		return network.UDP
+		return network2.UDP
 	case "kcp":
-		return network.KCP
+		return network2.KCP
 	default:
-		return network.TCP
+		return network2.TCP
 	}
 }

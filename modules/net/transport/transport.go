@@ -1,6 +1,8 @@
 package transport
 
-import "github.com/orbit-w/golib/core/network"
+import (
+	"github.com/orbit-w/golib/modules/net/network"
+)
 
 /*
    @Author: orbit-w

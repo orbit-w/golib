@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/orbit-w/golib/bases/packet"
-	"github.com/orbit-w/golib/core/network"
+	network2 "github.com/orbit-w/golib/modules/net/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
@@ -22,12 +22,12 @@ import (
 type TcpServerConn struct {
 	authed bool
 	conn   net.Conn
-	codec  *network.Codec
+	codec  *network2.Codec
 	ctx    context.Context
 	cancel context.CancelFunc
 	sw     *sender_wrapper.SenderWrapper
 	buf    *ControlBuffer
-	r      *network.BlockReceiver
+	r      *network2.BlockReceiver
 }
 
 func NewTcpServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) IServerConn {
@@ -37,10 +37,10 @@ func NewTcpServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uin
 	cCtx, cancel := context.WithCancel(ctx)
 	ts := &TcpServerConn{
 		conn:   _conn,
-		codec:  network.NewCodec(maxIncomingPacket, false, ReadTimeout),
+		codec:  network2.NewCodec(maxIncomingPacket, false, ReadTimeout),
 		ctx:    cCtx,
 		cancel: cancel,
-		r:      network.NewBlockReceiver(),
+		r:      network2.NewBlockReceiver(),
 	}
 
 	sw := sender_wrapper.NewSender(ts.SendData)

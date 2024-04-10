@@ -1,7 +1,7 @@
 package agent_stream
 
 import (
-	"github.com/orbit-w/golib/core/network"
+	network2 "github.com/orbit-w/golib/modules/net/network"
 	"net"
 	"sync"
 )
@@ -23,16 +23,16 @@ func NewStreamService(handle func(stream IStream) error, conf *Config) *StreamSe
 	return &StreamService{
 		conf:     conf,
 		handle:   handle,
-		headPool: network.NewBufferPool(network.HeadLen),
-		bodyPool: network.NewBufferPool(conf.MaxIncomingPacket),
+		headPool: network2.NewBufferPool(network2.HeadLen),
+		bodyPool: network2.NewBufferPool(conf.MaxIncomingPacket),
 	}
 }
 
 func (s *StreamService) Stream(conn net.Conn, _ *string, _ *string) error {
 	conf := s.conf
 	stream := NewAgentStream(conn, conf.MaxIncomingPacket, conf.IsGzip, conf.WriteTimeout, conf.ReadTimeout)
-	headBuf := s.headPool.Get().(*network.Buffer)
-	bodyBuf := s.bodyPool.Get().(*network.Buffer)
+	headBuf := s.headPool.Get().(*network2.Buffer)
+	bodyBuf := s.bodyPool.Get().(*network2.Buffer)
 
 	defer func() {
 		_ = stream.Close()
