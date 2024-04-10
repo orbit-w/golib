@@ -30,7 +30,7 @@ func NewStreamService(handle func(stream IStream) error, conf *Config) *StreamSe
 
 func (s *StreamService) Stream(conn net.Conn, _ *string, _ *string) error {
 	conf := s.conf
-	stream := NewAgentStream(conn, conf)
+	stream := NewAgentStream(conn, conf.MaxIncomingPacket, conf.IsGzip, conf.WriteTimeout, conf.ReadTimeout)
 	headBuf := s.headPool.Get().(*network.Buffer)
 	bodyBuf := s.bodyPool.Get().(*network.Buffer)
 

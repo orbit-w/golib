@@ -40,16 +40,16 @@ func NewCodec(max uint32, _isGzip bool, _readTimeout time.Duration) *Codec {
 }
 
 // EncodeBody 消息编码协议 body: size<int32> | gzipped<bool> | body<bytes>
-func (c *Codec) EncodeBody(body packet.IPacket, gzipped bool) (packet.IPacket, error) {
+func (c *Codec) EncodeBody(body packet.IPacket) (packet.IPacket, error) {
 	defer body.Return()
 	buf := packet.Writer()
 	writer := func(data []byte) {
 		buf.WriteInt32(int32(len(data)) + gzipSize)
-		buf.WriteBool(gzipped)
+		buf.WriteBool(c.isGzip)
 		buf.Write(data)
 	}
 
-	if gzipped {
+	if c.isGzip {
 		compressed, err := EncodeGzip(body.Data())
 		if err != nil {
 			log.Println("[Codec] [func:encodeBody] encode gzip failed: ", err.Error())
@@ -63,15 +63,15 @@ func (c *Codec) EncodeBody(body packet.IPacket, gzipped bool) (packet.IPacket, e
 	return buf, nil
 }
 
-func (c *Codec) EncodeBodyRaw(body []byte, gzipped bool) (packet.IPacket, error) {
+func (c *Codec) EncodeBodyRaw(body []byte) (packet.IPacket, error) {
 	buf := packet.Writer()
 	writer := func(data []byte) {
 		buf.WriteInt32(int32(len(data)) + gzipSize)
-		buf.WriteBool(gzipped)
+		buf.WriteBool(c.isGzip)
 		buf.Write(data)
 	}
 
-	if gzipped {
+	if c.isGzip {
 		compressed, err := EncodeGzip(body)
 		if err != nil {
 			log.Println("[Codec] [func:encodeBody] encode gzip failed: ", err.Error())

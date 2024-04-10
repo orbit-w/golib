@@ -69,7 +69,7 @@ func (ts *TcpServerConn) Close() error {
 // SendData implicitly call body.Return
 // coding: size<int32> | gzipped<bool> | body<bytes>
 func (ts *TcpServerConn) SendData(body packet.IPacket) error {
-	pack, err := ts.codec.EncodeBody(body, false)
+	pack, err := ts.codec.EncodeBody(body)
 	if err != nil {
 		return err
 	}

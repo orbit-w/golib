@@ -26,30 +26,28 @@ type IStream interface {
 
 type AgentStream struct {
 	conn         net.Conn
-	conf         *Config
 	codec        *network.Codec
 	r            *network.BlockReceiver
 	writeTimeout time.Duration
+	readTimeout  time.Duration
 }
 
-func NewAgentStream(_conn net.Conn, _conf *Config) *AgentStream {
+func NewAgentStream(_conn net.Conn, maxIncoming uint32, isGzip bool, wt, rt time.Duration) *AgentStream {
 	return &AgentStream{
 		conn:         _conn,
-		conf:         _conf,
-		codec:        network.NewCodec(_conf.MaxIncomingPacket, _conf.IsGzip, _conf.ReadTimeout),
+		codec:        network.NewCodec(maxIncoming, isGzip, rt),
 		r:            network.NewBlockReceiver(),
-		writeTimeout: _conf.WriteTimeout,
+		writeTimeout: wt,
 	}
 }
 
 func (stream *AgentStream) Send(body []byte) error {
-	conf := stream.conf
-	out, err := stream.codec.EncodeBodyRaw(body, conf.IsGzip)
+	out, err := stream.codec.EncodeBodyRaw(body)
 	if err != nil {
 		return err
 	}
 	defer out.Return()
-	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.conf.WriteTimeout)); err != nil {
+	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.writeTimeout)); err != nil {
 		return err
 	}
 	_, err = stream.conn.Write(out.Data())
@@ -57,13 +55,12 @@ func (stream *AgentStream) Send(body []byte) error {
 }
 
 func (stream *AgentStream) SendPack(body packet.IPacket) error {
-	conf := stream.conf
-	out, err := stream.codec.EncodeBody(body, conf.IsGzip)
+	out, err := stream.codec.EncodeBody(body)
 	if err != nil {
 		return err
 	}
 	defer out.Return()
-	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.conf.WriteTimeout)); err != nil {
+	if err = stream.conn.SetWriteDeadline(time.Now().Add(stream.writeTimeout)); err != nil {
 		return err
 	}
 	_, err = stream.conn.Write(out.Data())
@@ -96,25 +93,24 @@ func (stream *AgentStream) handleLoop(conn net.Conn, head, body []byte) {
 		if conn != nil {
 			_ = conn.Close()
 		}
-		stream.r.OnClose(network.ErrCanceled)
 		if err != nil {
 			if err == io.EOF || network.IsClosedConnError(err) {
 				//连接正常断开
+				stream.r.OnClose(network.ErrCanceled)
 			} else {
-				log.Println(fmt.Errorf("[AgentStream] stream disconnected: %server", err.Error()))
+				sErr := fmt.Errorf("[AgentStream] stream disconnected error: %s ", err.Error())
+				stream.r.OnClose(sErr)
+				log.Println(sErr)
 			}
+		} else {
+			stream.r.OnClose(network.ErrCanceled)
 		}
 	}()
 
 	for {
 		in, err = stream.codec.BlockDecodeBody(conn, head, body)
 		if err != nil {
-			if err == io.EOF {
-				log.Println("connection is closed")
-			} else {
-				log.Printf("read error: %v", err)
-			}
-			return
+			break
 		}
 
 		stream.r.Put(in.Remain(), nil)

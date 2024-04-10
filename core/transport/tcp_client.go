@@ -136,7 +136,7 @@ func (tc *TcpClient) SendData(data packet.IPacket) error {
 }
 
 func (tc *TcpClient) sendData(data packet.IPacket) error {
-	body, err := tc.codec.EncodeBody(data, false)
+	body, err := tc.codec.EncodeBody(data)
 	if err != nil {
 		return err
 	}

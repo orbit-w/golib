@@ -14,3 +14,8 @@ const (
 
 	DialTimeout = time.Second * 5
 )
+
+const (
+	StateNormal = iota
+	StateStopped
+)
