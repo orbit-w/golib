@@ -30,7 +30,7 @@ type TcpServerConn struct {
 	r      *network2.BlockReceiver
 }
 
-func NewTcpServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) IServerConn {
+func NewTcpServerConn(ctx context.Context, _conn net.Conn, maxIncomingPacket uint32, head, body []byte) IConn {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -92,17 +92,21 @@ func (ts *TcpServerConn) HandleLoop(header, body []byte) {
 			log.Println(r)
 			log.Println("stack: ", string(debug.Stack()))
 		}
-		ts.r.OnClose(ErrCanceled)
+
+		if err != nil {
+			if err == io.EOF || IsClosedConnError(err) {
+				ts.r.OnClose(ErrCanceled)
+			} else {
+				log.Println(fmt.Errorf("[TcpServerConn] tcp_conn disconnected: %s", err.Error()))
+				ts.r.OnClose(err)
+			}
+		} else {
+			ts.r.OnClose(ErrCanceled)
+		}
+
 		ts.buf.OnClose()
 		if ts.conn != nil {
 			_ = ts.conn.Close()
-		}
-		if err != nil {
-			if err == io.EOF || IsClosedConnError(err) {
-				//连接正常断开
-			} else {
-				log.Println(fmt.Errorf("[TcpServerConn] tcp_conn disconnected: %s", err.Error()))
-			}
 		}
 	}()
 

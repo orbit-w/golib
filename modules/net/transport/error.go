@@ -41,3 +41,10 @@ func ReceiveBufPutErr(err error) error {
 func ReadBodyFailed(err error) error {
 	return errors.New(fmt.Sprintf("read body failed: %s", err.Error()))
 }
+
+func MaxOfRetryErr(err error) error {
+	if err == nil {
+		return ErrMaxOfRetry
+	}
+	return errors.New(fmt.Sprintf("retry failed max limit: %s", err.Error()))
+}

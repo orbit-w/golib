@@ -2,7 +2,7 @@ package transport
 
 import (
 	"context"
-	network2 "github.com/orbit-w/golib/modules/net/network"
+	gnetwork "github.com/orbit-w/golib/modules/net/network"
 	"net"
 )
 
@@ -13,23 +13,23 @@ import (
 */
 
 func init() {
-	RegisterFactory(network2.TCP, func() ITransportServer {
+	RegisterFactory(gnetwork.TCP, func() ITransportServer {
 		return &TcpServer{}
 	})
 }
 
 type TcpServer struct {
-	server *network2.Server
+	server *gnetwork.Server
 }
 
-func (t *TcpServer) Serve(host string, _handle func(conn IServerConn), op network2.AcceptorOptions) error {
+func (t *TcpServer) Serve(host string, _handle func(conn IConn), op gnetwork.AcceptorOptions) error {
 	listener, err := net.Listen("tcp", host)
 	if err != nil {
 		return err
 	}
 
-	server := new(network2.Server)
-	server.Serve(network2.TCP, listener, func(ctx context.Context, generic net.Conn, maxIncomingPacket uint32, head, body []byte) {
+	server := new(gnetwork.Server)
+	server.Serve(gnetwork.TCP, listener, func(ctx context.Context, generic net.Conn, maxIncomingPacket uint32, head, body []byte) {
 		conn := NewTcpServerConn(ctx, generic, maxIncomingPacket, head, body)
 		defer func() {
 			_ = conn.Close()

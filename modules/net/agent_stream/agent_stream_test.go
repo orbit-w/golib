@@ -21,7 +21,7 @@ type Agent struct {
 func TestAgentStream(t *testing.T) {
 	t.Log("TestAgentStream")
 
-	go Serve(func(stream IStream) error {
+	Serve(func(stream IStream) error {
 		for {
 			in, err := stream.Recv()
 			if err != nil {
@@ -49,12 +49,14 @@ func TestAgentStream(t *testing.T) {
 
 	err = stream.Send([]byte("hello, server"))
 	assert.NoError(t, err)
+	err = stream.Send([]byte("hello, server"))
+	assert.NoError(t, err)
 	time.Sleep(time.Second * 5)
 	err = stream.Close()
 	assert.NoError(t, err)
 	err = cli.Close()
 	assert.NoError(t, err)
-	err = gs.Close()
+	err = gs.Stop()
 	assert.NoError(t, err)
 }
 

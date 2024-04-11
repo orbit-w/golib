@@ -2,9 +2,7 @@ package agent_stream
 
 import (
 	"github.com/orbit-w/golib/modules/net/network"
-	"github.com/smallnest/rpcx/server"
-	"github.com/smallnest/rpcx/share"
-	"net"
+	"github.com/orbit-w/golib/modules/net/transport"
 	"time"
 )
 
@@ -15,7 +13,7 @@ import (
 */
 
 type Server struct {
-	server *server.Server
+	server transport.IServer
 }
 
 // Serve 以默认配置启动AgentStream服务
@@ -27,17 +25,22 @@ func (s *Server) Serve(addr string, handle func(stream IStream) error) error {
 // ServeByConfig 以自定义配置启动AgentStream服务
 func (s *Server) ServeByConfig(addr string, handle func(stream IStream) error, conf *Config) error {
 	parseConfig(conf)
-	s.server = server.NewServer()
-	p := server.NewStreamService(addr, func(conn net.Conn, args *share.StreamServiceArgs) {
-		_ = NewStreamService(handle, conf).Stream(conn, nil, nil)
-	}, nil, 1000)
-	s.server.EnableStreamService(share.StreamServiceName, p)
+	ts, err := transport.Serve("tcp", addr, func(conn transport.IConn) {
+		if err := handle(conn); err != nil {
+
+		}
+		_ = conn.Close()
+	})
+	if err != nil {
+		return err
+	}
+	s.server = ts
 	return nil
 }
 
-func (s *Server) Close() error {
+func (s *Server) Stop() error {
 	if s.server != nil {
-		return s.server.Close()
+		return s.server.Stop()
 	}
 	return nil
 }

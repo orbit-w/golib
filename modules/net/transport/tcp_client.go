@@ -66,9 +66,9 @@ func DialWithOps(remoteAddr string, _ops ...*DialOption) IConn {
 	return tc
 }
 
-// Write TcpClient obj does not implicitly call IPacket.Return to return the
+// Send TcpClient obj does not implicitly call IPacket.Return to return the
 // packet to the pool, and the user needs to explicitly call it.
-func (tc *TcpClient) Write(out []byte) error {
+func (tc *TcpClient) Send(out []byte) error {
 	pack := packHeadByte(out, TypeMessageRaw)
 	defer pack.Return()
 	err := tc.buf.Set(pack)
@@ -106,15 +106,9 @@ func (tc *TcpClient) handleDial(_ *DialOption) {
 		defer tc.mu.Unlock()
 		tc.state.Store(StatusDisconnected)
 		fmt.Println("retry failed max limit")
-		tc.r.OnClose(ErrCanceled)
+		tc.r.OnClose(err)
 		return
 	}
-
-	defer func() {
-		if tc.state.CompareAndSwap(StatusConnected, StatusDisconnected) {
-			tc.r.OnClose(ErrCanceled)
-		}
-	}()
 
 	tc.state.Store(StatusConnected)
 	tc.lastAck.Store(0)
@@ -175,14 +169,20 @@ func (tc *TcpClient) reader() {
 		if tc.conn != nil {
 			_ = tc.conn.Close()
 		}
-		if tc.cancel != nil {
-			tc.cancel()
-		}
 
 		if err != nil {
-			if !(err == io.EOF || IsClosedConnError(err)) {
+			if err == io.EOF || IsClosedConnError(err) {
+				tc.r.OnClose(ErrCanceled)
+			} else {
 				log.Println(fmt.Errorf("tcp %s disconnected: %s", tc.remoteAddr, err.Error()))
+				tc.r.OnClose(err)
 			}
+		} else {
+			tc.r.OnClose(ErrCanceled)
+		}
+
+		if tc.cancel != nil {
+			tc.cancel()
 		}
 	}()
 
@@ -277,16 +277,19 @@ func (tc *TcpClient) StateCompareAndSwap(old, new uint32) bool {
 }
 
 func withRetry(handle func() error) error {
-	retried := int32(0)
+	var (
+		err     error
+		retried int32
+	)
 	for {
-		err := handle()
+		err = handle()
 		if err == nil {
 			return nil
 		}
 		//exponential backoff
 		time.Sleep(time.Millisecond * time.Duration(100<<retried))
 		if retried >= MaxRetried {
-			return ErrMaxOfRetry
+			return MaxOfRetryErr(err)
 		}
 		retried++
 	}

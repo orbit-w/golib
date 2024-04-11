@@ -15,13 +15,13 @@ import (
 // A ClientConn have one actual connections to the endpoint
 // based on configuration
 type IConn interface {
-	Write(data []byte) error
+	Send(data []byte) error
 	Recv() ([]byte, error)
 	Close() error
 }
 
 type ITransportServer interface {
-	Serve(host string, _handle func(conn IServerConn), op network.AcceptorOptions) error
+	Serve(host string, _handle func(conn IConn), op network.AcceptorOptions) error
 	Stop() error
 }
 

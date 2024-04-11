@@ -20,14 +20,8 @@ type IServer interface {
 	Stop() error
 }
 
-type IServerConn interface {
-	Send(data []byte) error
-	Recv() ([]byte, error)
-	Close() error
-}
-
 func Serve(pStr, host string,
-	_handle func(conn IServerConn)) (IServer, error) {
+	_handle func(conn IConn)) (IServer, error) {
 	config := DefaultServerConfig()
 	op := config.ToAcceptorOptions()
 	protocol := parseProtocol(pStr)

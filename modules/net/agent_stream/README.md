@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 	defer func() {
-		_ = server.Close()
+		_ = server.Stop()
 	}()
 
 	stop := make(chan os.Signal, 1)

@@ -41,7 +41,7 @@ func Test_Transport(t *testing.T) {
 	}()
 
 	w := []byte{1}
-	_ = conn.Write(w)
+	_ = conn.Send(w)
 
 	time.Sleep(time.Second * 10)
 	_ = s.Stop()
@@ -53,7 +53,7 @@ func ServeTest(t TestingT, host string) IServer {
 		err    error
 	)
 	ServeOnce.Do(func() {
-		server, err = Serve("tcp", host, func(conn IServerConn) {
+		server, err = Serve("tcp", host, func(conn IConn) {
 			for {
 				in, err := conn.Recv()
 				if err != nil {
