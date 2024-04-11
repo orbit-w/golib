@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"github.com/orbit-w/golib/bases/packet"
 	"github.com/orbit-w/golib/modules/net/network"
 )
 
@@ -11,11 +12,12 @@ import (
 */
 
 // IConn represents a virtual connection to a conceptual endpoint
-//
-// A ClientConn have one actual connections to the endpoint
-// based on configuration
+// that can send and receive data.
 type IConn interface {
 	Send(data []byte) error
+	// SendPack TcpServerConn obj does not implicitly call IPacket.Return to return the
+	// packet to the pool, and the user needs to explicitly call it.
+	SendPack(out packet.IPacket) (err error)
 	Recv() ([]byte, error)
 	Close() error
 }

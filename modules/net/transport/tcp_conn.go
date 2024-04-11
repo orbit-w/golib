@@ -58,6 +58,15 @@ func (ts *TcpServerConn) Send(data []byte) (err error) {
 	return
 }
 
+// SendPack TcpServerConn obj does not implicitly call IPacket.Return to return the
+// packet to the pool, and the user needs to explicitly call it.
+func (ts *TcpServerConn) SendPack(out packet.IPacket) (err error) {
+	pack := packHeadByteP(out, TypeMessageRaw)
+	err = ts.buf.Set(pack)
+	pack.Return()
+	return
+}
+
 func (ts *TcpServerConn) Recv() ([]byte, error) {
 	return ts.r.Recv()
 }

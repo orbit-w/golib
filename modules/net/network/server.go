@@ -16,12 +16,6 @@ import (
    @2023 11月 周五 17:04
 */
 
-type IServerConn interface {
-	Send(data []byte) error
-	Recv() ([]byte, error)
-	Close() error
-}
-
 type Server struct {
 	isGzip            bool
 	ccu               int32

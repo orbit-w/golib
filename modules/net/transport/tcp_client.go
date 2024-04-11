@@ -66,10 +66,17 @@ func DialWithOps(remoteAddr string, _ops ...*DialOption) IConn {
 	return tc
 }
 
-// Send TcpClient obj does not implicitly call IPacket.Return to return the
-// packet to the pool, and the user needs to explicitly call it.
 func (tc *TcpClient) Send(out []byte) error {
 	pack := packHeadByte(out, TypeMessageRaw)
+	defer pack.Return()
+	err := tc.buf.Set(pack)
+	return err
+}
+
+// SendPack TcpClient obj does not implicitly call IPacket.Return to return the
+// packet to the pool, and the user needs to explicitly call it.
+func (tc *TcpClient) SendPack(out packet.IPacket) error {
+	pack := packHeadByteP(out, TypeMessageRaw)
 	defer pack.Return()
 	err := tc.buf.Set(pack)
 	return err

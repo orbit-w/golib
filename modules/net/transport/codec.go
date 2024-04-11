@@ -98,6 +98,18 @@ func packHeadByte(data []byte, mt int8) packet.IPacket {
 	return writer
 }
 
+func packHeadByteP(pack packet.IPacket, mt int8) packet.IPacket {
+	writer := packet.Writer()
+	writer.WriteInt8(mt)
+	if pack != nil {
+		data := pack.Remain()
+		if len(data) > 0 {
+			writer.Write(data)
+		}
+	}
+	return writer
+}
+
 func unpackHeadByte(pack packet.IPacket, handle func(h int8, data []byte)) error {
 	defer pack.Return()
 	head, err := pack.ReadInt8()
