@@ -11,7 +11,15 @@ import (
    @2024 4月 周五 17:57
 */
 
-func RecoverPanic(handle func()) {
+func RecoverPanic() {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered from panic:", r)
+		fmt.Println("Stack trace:")
+		debug.PrintStack()
+	}
+}
+
+func RecoverPanicHandle(handle func()) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)
@@ -21,4 +29,8 @@ func RecoverPanic(handle func()) {
 	}()
 
 	handle()
+}
+
+func GoRecoverPanic(handle func()) {
+	go RecoverPanicHandle(handle)
 }

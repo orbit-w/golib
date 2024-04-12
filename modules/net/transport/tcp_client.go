@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/orbit-w/golib/bases/misc/number_utils"
+	"github.com/orbit-w/golib/bases/misc/utils"
 	"github.com/orbit-w/golib/bases/packet"
 	gnetwork "github.com/orbit-w/golib/modules/net/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
@@ -172,6 +173,7 @@ func (tc *TcpClient) reader() {
 		bytes []byte
 	)
 
+	defer utils.RecoverPanic()
 	defer func() {
 		if tc.conn != nil {
 			_ = tc.conn.Close()

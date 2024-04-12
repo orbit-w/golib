@@ -3,13 +3,13 @@ package transport
 import (
 	"context"
 	"fmt"
+	"github.com/orbit-w/golib/bases/misc/utils"
 	"github.com/orbit-w/golib/bases/packet"
 	network2 "github.com/orbit-w/golib/modules/net/network"
 	"github.com/orbit-w/golib/modules/wrappers/sender_wrapper"
 	"io"
 	"log"
 	"net"
-	"runtime/debug"
 	"time"
 )
 
@@ -96,12 +96,8 @@ func (ts *TcpServerConn) HandleLoop(header, body []byte) {
 		data packet.IPacket
 	)
 
+	defer utils.RecoverPanic()
 	defer func() {
-		if r := recover(); r != nil {
-			log.Println(r)
-			log.Println("stack: ", string(debug.Stack()))
-		}
-
 		if err != nil {
 			if err == io.EOF || IsClosedConnError(err) {
 				ts.r.OnClose(ErrCanceled)

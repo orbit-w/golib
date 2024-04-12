@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"log"
-	"runtime/debug"
 	"strconv"
 )
 
@@ -40,16 +38,4 @@ func FormatInteger(value any) string {
 	default:
 		panic("value type not integer")
 	}
-}
-
-func GoSafe(handle func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("recoverd: %v", r)
-				debug.PrintStack()
-			}
-		}()
-		handle()
-	}()
 }

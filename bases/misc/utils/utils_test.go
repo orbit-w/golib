@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func Test_ParseFloat(t *testing.T) {
@@ -24,7 +25,34 @@ func Test_ParseInteger(t *testing.T) {
 }
 
 func TestRecoverPanic(t *testing.T) {
-	RecoverPanic(func() {
+	RecoverPanicV2()
+}
+
+func ExampleRecoverPanic() {
+	for i := 0; i < 3; i++ {
+		RecoverPanicHandle(func() {
+			panic(fmt.Sprintf("test panic, %d", i))
+		})
+	}
+
+	RecoverPanicHandle(func() {
 		panic("test panic")
 	})
+
+	GoRecoverPanic(func() {
+		panic("test panic")
+	})
+
+	defer RecoverPanic()
+
+	time.Sleep(time.Second * 2)
+	fmt.Println("test panic complete")
+}
+
+func RecoverPanicV2() {
+	defer RecoverPanic()
+	defer func() {
+		fmt.Println("test panic complete")
+	}()
+	panic("test panic")
 }

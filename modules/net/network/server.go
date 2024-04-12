@@ -2,9 +2,8 @@ package network
 
 import (
 	"context"
-	"log"
+	"github.com/orbit-w/golib/bases/misc/utils"
 	"net"
-	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -90,21 +89,16 @@ func (ins *Server) acceptLoop() {
 }
 
 func (ins *Server) handleConn(conn net.Conn) {
-	go func() {
+	utils.GoRecoverPanic(func() {
 		head := ins.headPool.Get().(*Buffer)
 		body := ins.bodyPool.Get().(*Buffer)
-
 		defer func() {
-			if r := recover(); r != nil {
-				log.Println(r)
-				log.Println("stack", string(debug.Stack()))
-			}
 			ins.headPool.Put(head)
 			ins.bodyPool.Put(body)
 		}()
 
 		ins.handle(ins.ctx, conn, ins.maxIncomingPacket, head.Bytes, body.Bytes)
-	}()
+	})
 }
 
 func DefaultAcceptorOptions() AcceptorOptions {
