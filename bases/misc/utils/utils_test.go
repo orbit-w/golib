@@ -22,3 +22,9 @@ func Test_ParseInteger(t *testing.T) {
 	)
 	fmt.Println(FormatInteger(v32))
 }
+
+func TestRecoverPanic(t *testing.T) {
+	RecoverPanic(func() {
+		panic("test panic")
+	})
+}
